@@ -10,6 +10,7 @@ export interface DemoAccount {
   highlights: string[];
 }
 
+// Admin demo intentionally removed: a public password must never unlock the admin dashboard.
 export const DEMO_PASSWORD = 'StidDemo2026!';
 
 export const DEMO_ACCOUNTS: DemoAccount[] = [
@@ -48,14 +49,5 @@ export const DEMO_ACCOUNTS: DemoAccount[] = [
     title: 'The Warm Hospitality Host',
     personality: 'Welcoming and attentive, with a careful eye on every guest arrival.',
     highlights: ['Verifies hotel guests', 'Raises mismatch reports', 'Manages stays'],
-  },
-  {
-    id: 'dana',
-    email: 'dana.okafor@demo.stid.test',
-    role: 'admin',
-    name: 'Dana Okafor',
-    title: 'The Calm Trust and Safety Lead',
-    personality: 'Methodical and fair, reviewing reports across the whole platform.',
-    highlights: ['Platform-wide oversight', 'Mismatch report review', 'User management'],
   },
 ];
