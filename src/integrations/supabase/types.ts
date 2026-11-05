@@ -295,7 +295,7 @@ export type Database = {
           full_name: string
           id: string
           phone: string | null
-          role: string
+          role: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -303,7 +303,7 @@ export type Database = {
           full_name?: string
           id: string
           phone?: string | null
-          role?: string
+          role?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -311,7 +311,28 @@ export type Database = {
           full_name?: string
           id?: string
           phone?: string | null
-          role?: string
+          role?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -378,10 +399,22 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      choose_initial_role: {
+        Args: { _full_name: string; _role: string }
+        Returns: undefined
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       is_admin: { Args: never; Returns: boolean }
+      verify_traveler_qr: { Args: { _token: string }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "traveler" | "business" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -508,6 +541,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["traveler", "business", "admin"],
+    },
   },
 } as const
