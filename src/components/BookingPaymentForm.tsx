@@ -99,7 +99,7 @@ export function BookingPaymentForm({ business, traveler, identity, onSaved, onCa
         <div className="min-w-0">
           <p className="font-medium text-navy-900 truncate">{traveler.full_name}</p>
           <p className="text-xs text-navy-500 font-mono truncate">
-            {identity ? `Passport ${identity.passport_number}` : 'No digital identity on file'}
+            {identity ? 'Digital identity verified by your business' : 'No digital identity on file'}
           </p>
         </div>
       </div>

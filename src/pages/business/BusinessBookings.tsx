@@ -48,21 +48,24 @@ export function BusinessBookings() {
     setFoundTraveler(null);
     setFoundIdentity(null);
 
-    const { data: traveler } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'traveler')
-      .ilike('full_name', `%${travelerQuery}%`)
-      .limit(5);
-
-    if (traveler && traveler.length > 0) {
-      setFoundTraveler(traveler[0] as Profile);
-      const { data: ident } = await supabase
-        .from('identities')
-        .select('*')
-        .eq('user_id', traveler[0].id)
-        .maybeSingle();
-      if (ident) setFoundIdentity(ident as Identity);
+    // Privacy: a business can only book travelers it has already verified by QR scan.
+    const { data: rows } = await supabase
+      .from('verifications')
+      .select('identity_id, traveler_user_id, created_at, traveler:profiles!traveler_user_id(*)')
+      .eq('business_id', business?.id ?? '')
+      .eq('result', 'verified')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    const q = travelerQuery.trim().toLowerCase();
+    const match = (rows || []).find((r) => {
+      const t = r.traveler as unknown as Profile | null;
+      return t && t.full_name.toLowerCase().includes(q);
+    });
+    if (match) {
+      setFoundTraveler(match.traveler as unknown as Profile);
+      if (match.identity_id) setFoundIdentity({ id: match.identity_id } as Identity);
+    } else {
+      setToast({ message: 'No verified traveler with that name. Scan their QR code first, then create the booking.', type: 'info' });
     }
     setSearching(false);
   };
@@ -198,6 +201,7 @@ export function BusinessBookings() {
         <div className="space-y-5">
           <div>
             <label className="label">Search Traveler by Name</label>
+            <p className="text-xs text-navy-400 -mt-1 mb-2">Only travelers you have verified with a QR scan appear here.</p>
             <div className="flex gap-2">
               <input className="input" placeholder="Enter traveler name..." value={travelerQuery} onChange={(e) => setTravelerQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && searchTraveler()} />
               <button onClick={searchTraveler} disabled={searching} className="btn-secondary">
