@@ -5,11 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, Spinner, Toast } from '@/components/ui';
-import type { OCRResult, Identity } from '@/types';
+import type { OCRResult } from '@/types';
+import { useServerFn } from '@tanstack/react-start';
+import { scanPassport } from '@/lib/ocr.functions';
+import { compressImage } from '@/lib/image';
 
 export function TravelerScan() {
   const { profile } = useAuth();
   const navigate = useNavigate();
+  const scanPassportFn = useServerFn(scanPassport);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
 
@@ -22,53 +26,46 @@ export function TravelerScan() {
 
   const handleFile = async (file: File) => {
     setError(null);
+    if (!file.type.startsWith('image/') && !/\.(heic|heif)$/i.test(file.name)) {
+      setError('Please choose a photo (JPG or PNG) of your passport page.');
+      setOcrData({});
+      setStep('review');
+      return;
+    }
     setStep('processing');
-
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-      const base64 = (e.target?.result as string).split(',')[1];
-      setImagePreview(e.target?.result as string);
-
-      try {
-        const apiUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ocr-passport`;
-        const { data: sessionData } = await supabase.auth.getSession();
-        const response = await fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${sessionData.session?.access_token}`,
-          },
-          body: JSON.stringify({ image_base64: base64 }),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          if (result.error === 'OCR_NOT_CONFIGURED') {
-            setError(result.message || 'OCR service is not configured. You can enter your passport details manually below.');
-            setOcrData({});
-            setStep('review');
-          } else {
-            setError(result.error || 'Failed to scan passport. Please try again or enter details manually.');
-            setStep('review');
-            setOcrData({});
-          }
-          return;
-        }
-
-        setOcrData(result as OCRResult);
-        setStep('review');
-      } catch {
-        setError('Network error. Please try again or enter your passport details manually.');
-        setStep('review');
+    try {
+      const { dataUrl, base64 } = await compressImage(file);
+      setImagePreview(dataUrl);
+      const result = await scanPassportFn({ data: { imageBase64: base64 } });
+      if (!result.ok) {
+        setError(result.message);
         setOcrData({});
+      } else {
+        setOcrData(result.data as OCRResult);
+        const filled = ['full_name', 'passport_number', 'nationality', 'date_of_birth'].filter((k) => (result.data as Record<string, unknown>)[k]);
+        if (filled.length < 2) setError('We could only read part of the passport. Please check and fill in the missing fields.');
       }
-    };
-    reader.readAsDataURL(file);
+    } catch (e) {
+      console.error(e);
+      setError('Could not scan this photo. Please try again or type your details below.');
+      setOcrData({});
+    }
+    setStep('review');
+  };
+
+  const startManual = () => {
+    setError(null);
+    setImagePreview('');
+    setOcrData({ full_name: profile?.full_name || '' });
+    setStep('review');
   };
 
   const handleSave = async () => {
     if (!profile) return;
+    if (!ocrData.full_name?.trim() || !ocrData.passport_number?.trim() || !ocrData.nationality?.trim()) {
+      setError('Full name, passport number and nationality are required.');
+      return;
+    }
     setSaving(true);
     setError(null);
 
@@ -139,17 +136,6 @@ export function TravelerScan() {
         <p className="text-navy-500 mt-1">Upload a photo of your passport to extract information automatically</p>
       </div>
 
-      {/* OCR configuration notice */}
-      <div className="mb-6 p-4 rounded-xl bg-blue-50 border border-blue-200 flex items-start gap-3">
-        <Info size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
-        <div className="text-sm text-blue-800">
-          <p className="font-medium">Passport OCR Setup</p>
-          <p className="mt-1 text-blue-700">
-            Passport scanning uses Google Cloud Vision API for real OCR text extraction. If the API key is not configured, you can still manually enter your passport details. See the setup note below the scan area.
-          </p>
-        </div>
-      </div>
-
       <div className="max-w-3xl mx-auto">
         {step === 'upload' && (
           <Card className="animate-fade-in">
@@ -171,11 +157,11 @@ export function TravelerScan() {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
-                <button onClick={() => fileInputRef.current?.click()} className="btn-primary">
+                <button type="button" onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }} className="btn-primary">
                   <Upload size={18} />
                   Choose File
                 </button>
-                <button onClick={() => cameraInputRef.current?.click()} className="btn-secondary">
+                <button type="button" onClick={(e) => { e.stopPropagation(); cameraInputRef.current?.click(); }} className="btn-secondary">
                   <Camera size={18} />
                   Take Photo
                 </button>
@@ -186,7 +172,8 @@ export function TravelerScan() {
                 type="file"
                 accept="image/*"
                 className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f); }}
               />
               <input
                 ref={cameraInputRef}
@@ -194,13 +181,19 @@ export function TravelerScan() {
                 accept="image/*"
                 capture="environment"
                 className="hidden"
-                onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleFile(f); }}
               />
             </div>
 
-            <div className="mt-6 p-4 rounded-xl bg-navy-50 border border-navy-100">
-              <p className="text-xs text-navy-500 font-medium mb-2">OCR Configuration (for developers/admins):</p>
-              <p className="text-xs text-navy-400 font-mono">Set the <code className="text-turquoise-600 font-semibold">GOOGLE_CLOUD_VISION_API_KEY</code> secret in Supabase Edge Functions to enable real passport OCR. Without it, users can enter passport details manually.</p>
+            <div className="mt-6 flex flex-col sm:flex-row items-center justify-between gap-3 p-4 rounded-xl bg-navy-50 border border-navy-100">
+              <p className="text-sm text-navy-600 flex items-start gap-2">
+                <Info size={16} className="text-turquoise-600 flex-shrink-0 mt-0.5" />
+                Tip: lay the passport flat in good light so the two lines of code at the bottom are sharp.
+              </p>
+              <button type="button" onClick={startManual} className="text-sm font-semibold text-turquoise-700 hover:text-turquoise-800 whitespace-nowrap">
+                Enter details manually
+              </button>
             </div>
           </Card>
         )}
@@ -230,10 +223,10 @@ export function TravelerScan() {
               )}
               <div>
                 <h3 className="text-lg font-bold text-navy-900">
-                  {error ? 'Manual Entry Required' : 'Review Extracted Information'}
+                  {error ? 'Please check your details' : imagePreview ? 'Review Extracted Information' : 'Enter your passport details'}
                 </h3>
                 <p className="text-sm text-navy-500 mt-1">
-                  {error ? error : 'Please review the extracted data and correct any errors before saving.'}
+                  {error ? error : imagePreview ? 'Please review the extracted data and correct any errors before saving.' : 'Type the details exactly as they appear on your passport.'}
                 </p>
               </div>
             </div>
@@ -261,7 +254,7 @@ export function TravelerScan() {
             <div className="flex flex-col sm:flex-row gap-3 mt-8">
               <button onClick={reset} className="btn-secondary">
                 <RotateCcw size={16} />
-                Re-scan
+                Start over
               </button>
               <button onClick={handleSave} disabled={saving} className="btn-primary flex-1">
                 {saving ? <Spinner size={16} /> : <Save size={16} />}
