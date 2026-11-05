@@ -57,11 +57,11 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
         setLoading(false);
         return;
       }
-      const { error } = await signUp(email, password, role, fullName);
+      const { error, needsConfirmation } = await signUp(email, password, role, fullName);
       if (error) {
         setError(error);
         setLoading(false);
-      } else if (needsConfirm.current) {
+      } else if (needsConfirmation) {
         setInfo('Account created! Check your email and click the confirmation link, then sign in.');
         setLoading(false);
       } else {
@@ -328,6 +328,12 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
                       </button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {info && (
+                <div className="p-3 rounded-xl bg-turquoise-50 border border-turquoise-200 text-sm text-turquoise-800 animate-slide-down">
+                  {info}
                 </div>
               )}
 
