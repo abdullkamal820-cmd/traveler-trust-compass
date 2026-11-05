@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, type ReactNode } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import { lovable } from '@/integrations/lovable';
 import type { Profile, UserRole } from '@/types';
 
 interface AuthContextValue {
@@ -8,7 +9,7 @@ interface AuthContextValue {
   profile: Profile | null;
   loading: boolean;
   needsProfileCompletion: boolean;
-  signUp: (email: string, password: string, role: UserRole, fullName: string) => Promise<{ error: string | null }>;
+  signUp: (email: string, password: string, role: UserRole, fullName: string) => Promise<{ error: string | null; needsConfirmation?: boolean }>;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signInWithGoogle: () => Promise<{ error: string | null }>;
   signInWithPhone: (phone: string) => Promise<{ error: string | null }>;
@@ -26,165 +27,111 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [needsProfileCompletion, setNeedsProfileCompletion] = useState(false);
 
+  // Role comes from the protected profiles.role mirror (maintained by the database from user_roles).
+  // A missing role means the user still has to pick traveler/business (e.g. after Google sign-in).
   const fetchProfile = useCallback(async (userId: string) => {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-
+    const { data, error } = await supabase.from('profiles').select('*').eq('id', userId).maybeSingle();
     if (error) {
       console.error('Error fetching profile:', error);
+      setProfile(null);
       setNeedsProfileCompletion(true);
       return null;
     }
-
     const p = data as Profile | null;
-    setProfile(p);
-
-    if (!p) {
+    if (!p || !p.role) {
+      setProfile(null);
       setNeedsProfileCompletion(true);
-    } else {
-      setNeedsProfileCompletion(false);
+      return null;
     }
-
+    setProfile(p);
+    setNeedsProfileCompletion(false);
     return p;
   }, []);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
+    let active = true;
+    const { data: authListener } = supabase.auth.onAuthStateChange((event, s) => {
+      if (!active) return;
       setSession(s);
+      if (event === 'TOKEN_REFRESHED') return;
       if (s?.user) {
-        fetchProfile(s.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
-      }
-    });
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, s) => {
-      setSession(s);
-      if (s?.user) {
-        (async () => {
-          await fetchProfile(s.user.id);
-        })();
+        // defer DB call out of the auth callback to avoid deadlocks
+        setTimeout(() => {
+          fetchProfile(s.user.id).finally(() => active && setLoading(false));
+        }, 0);
       } else {
         setProfile(null);
         setNeedsProfileCompletion(false);
+        setLoading(false);
       }
-      setLoading(false);
     });
-
+    supabase.auth.getSession().then(({ data: { session: s } }) => {
+      if (!active) return;
+      setSession(s);
+      if (s?.user) fetchProfile(s.user.id).finally(() => active && setLoading(false));
+      else setLoading(false);
+    });
     return () => {
+      active = false;
       authListener.subscription.unsubscribe();
     };
   }, [fetchProfile]);
 
-  const signUp = useCallback(
-    async (email: string, password: string, role: UserRole, fullName: string) => {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { role, full_name: fullName },
-        },
-      });
-
-      if (error) return { error: error.message };
-
-      if (data.user) {
-        const { error: profileError } = await supabase.from('profiles').insert({
-          id: data.user.id,
-          role,
-          full_name: fullName,
-        });
-
-        if (profileError) {
-          return { error: profileError.message };
-        }
-
-        await fetchProfile(data.user.id);
-      }
-
-      return { error: null };
-    },
-    [fetchProfile]
-  );
-
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) return { error: error.message };
-
-    if (data.user) {
-      await fetchProfile(data.user.id);
-    }
-
-    return { error: null };
-  }, [fetchProfile]);
-
-  const signInWithGoogle = useCallback(async () => {
-    const redirectTo = `${window.location.origin}${window.location.pathname}`;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
+  const signUp = useCallback(async (email: string, password: string, role: UserRole, fullName: string) => {
+    if (role !== 'traveler' && role !== 'business') return { error: 'Please choose Traveler or Business.' };
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
       options: {
-        redirectTo,
+        emailRedirectTo: window.location.origin,
+        // The database only honours 'traveler' or 'business' here; admin can never be self-assigned.
+        data: { role, full_name: fullName },
       },
     });
     if (error) return { error: error.message };
+    if (!data.session) return { error: null, needsConfirmation: true };
+    return { error: null };
+  }, []);
+
+  const signIn = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      if (/email not confirmed/i.test(error.message)) {
+        return { error: 'Please confirm your email first — check your inbox for the confirmation link.' };
+      }
+      return { error: error.message };
+    }
+    return { error: null };
+  }, []);
+
+  const signInWithGoogle = useCallback(async () => {
+    const result = await lovable.auth.signInWithOAuth('google', { redirect_uri: window.location.origin });
+    if (result.error) return { error: result.error.message || 'Google sign-in failed' };
     return { error: null };
   }, []);
 
   const signInWithPhone = useCallback(async (phone: string) => {
-    const { error } = await supabase.auth.signInWithOtp({
-      phone,
-      options: {
-        channel: 'sms',
-      },
-    });
-    if (error) return { error: error.message };
+    const { error } = await supabase.auth.signInWithOtp({ phone, options: { channel: 'sms' } });
+    if (error) {
+      if (/provider|sms|phone/i.test(error.message)) {
+        return { error: 'Phone sign-in is not set up yet. Please use email or Google for now.' };
+      }
+      return { error: error.message };
+    }
     return { error: null };
   }, []);
 
   const verifyPhoneOtp = useCallback(async (phone: string, token: string) => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      phone,
-      token,
-      type: 'sms',
-    });
-
+    const { error } = await supabase.auth.verifyOtp({ phone, token, type: 'sms' });
     if (error) return { error: error.message };
-
-    if (data.user) {
-      await fetchProfile(data.user.id);
-    }
-
     return { error: null };
-  }, [fetchProfile]);
+  }, []);
 
   const completeProfile = useCallback(
     async (role: UserRole, fullName: string) => {
       if (!session?.user) return { error: 'Not authenticated' };
-
-      const { data: existing } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', session.user.id)
-        .maybeSingle();
-
-      if (existing) {
-        const { error } = await supabase
-          .from('profiles')
-          .update({ role, full_name: fullName })
-          .eq('id', session.user.id);
-        if (error) return { error: error.message };
-      } else {
-        const { error } = await supabase.from('profiles').insert({
-          id: session.user.id,
-          role,
-          full_name: fullName,
-        });
-        if (error) return { error: error.message };
-      }
-
+      const { error } = await supabase.rpc('choose_initial_role', { _role: role, _full_name: fullName });
+      if (error) return { error: error.message };
       await fetchProfile(session.user.id);
       return { error: null };
     },
@@ -199,26 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshProfile = useCallback(async () => {
-    if (session?.user) {
-      await fetchProfile(session.user.id);
-    }
+    if (session?.user) await fetchProfile(session.user.id);
   }, [session, fetchProfile]);
 
   return (
     <AuthContext.Provider
       value={{
-        session,
-        profile,
-        loading,
-        needsProfileCompletion,
-        signUp,
-        signIn,
-        signInWithGoogle,
-        signInWithPhone,
-        verifyPhoneOtp,
-        completeProfile,
-        signOut,
-        refreshProfile,
+        session, profile, loading, needsProfileCompletion,
+        signUp, signIn, signInWithGoogle, signInWithPhone, verifyPhoneOtp,
+        completeProfile, signOut, refreshProfile,
       }}
     >
       {children}
