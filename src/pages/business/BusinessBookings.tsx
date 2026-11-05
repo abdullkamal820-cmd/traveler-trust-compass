@@ -18,7 +18,7 @@ export function BusinessBookings() {
   const [filter, setFilter] = useState('all');
   const [createOpen, setCreateOpen] = useState(false);
   const [paymentTarget, setPaymentTarget] = useState<Booking | null>(null);
-  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [travelerQuery, setTravelerQuery] = useState('');
   const [foundTraveler, setFoundTraveler] = useState<Profile | null>(null);
