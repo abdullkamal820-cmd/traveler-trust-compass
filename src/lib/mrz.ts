@@ -106,6 +106,7 @@ function formatMrzDate(yyMMdd: string, isExpiry: boolean): string {
   const yy = parseInt(yyMMdd.substring(0, 2), 10);
   const mm = yyMMdd.substring(2, 4);
   const dd = yyMMdd.substring(4, 6);
-  const year = isExpiry ? 2000 + yy : yy >= 50 ? 1900 + yy : 2000 + yy;
+  const nowYY = new Date().getFullYear() % 100;
+  const year = isExpiry ? 2000 + yy : yy > nowYY ? 1900 + yy : 2000 + yy;
   return `${year}-${mm}-${dd}`;
 }
