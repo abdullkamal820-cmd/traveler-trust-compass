@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from '@/lib/router-compat';
 import { LogOut, Menu, X, Bell, ChevronDown } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Logo } from '@/components/Logo';
+import { ThemeToggle } from '@/components/ThemeToggle';
 import type { UserRole } from '@/types';
 
 interface NavItem {
@@ -68,7 +69,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-navy-50 flex">
       {/* Sidebar - Desktop */}
-      <aside className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-navy-900 text-white flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+      <aside className={`fixed lg:sticky top-0 left-0 z-40 h-screen w-72 bg-gradient-to-b from-[#102a43] to-[#0a1c2e] text-white border-r border-white/5 flex flex-col transition-transform duration-300 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 border-b border-white/10">
           <Logo light size="md" />
         </div>
@@ -89,8 +90,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 }}
                 className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                   active
-                    ? 'bg-turquoise-600 text-white shadow-lg shadow-turquoise-600/20'
-                    : 'text-navy-300 hover:bg-white/5 hover:text-white'
+                    ? 'bg-gradient-to-r from-turquoise-600 to-turquoise-500 text-white shadow-lg shadow-turquoise-900/30'
+                    : 'text-white/60 hover:bg-white/5 hover:text-white'
                 }`}
               >
                 <item.icon size={18} />
@@ -103,7 +104,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="p-4 border-t border-white/10">
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-navy-300 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-white/60 hover:bg-red-500/10 hover:text-red-400 transition-all duration-200"
           >
             <LogOut size={18} />
             Sign Out
@@ -119,7 +120,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       {/* Main content */}
       <div className="flex-1 min-w-0 flex flex-col">
         {/* Top bar */}
-        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-md border-b border-navy-100">
+        <header className="sticky top-0 z-20 bg-white/80 backdrop-blur-xl border-b border-navy-100 shadow-[0_1px_0_rgba(16,42,67,0.03)]">
           <div className="flex items-center justify-between px-4 sm:px-6 h-16">
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -134,6 +135,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-3">
+              <ThemeToggle />
               <button className="relative p-2 rounded-lg hover:bg-navy-50 text-navy-600">
                 <Bell size={20} />
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-turquoise-500 rounded-full" />
@@ -144,7 +146,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                   className="flex items-center gap-2 p-1.5 rounded-xl hover:bg-navy-50 transition-colors"
                 >
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-navy-700 to-navy-900 flex items-center justify-center text-white text-sm font-semibold">
+                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-turquoise-500 to-turquoise-700 flex items-center justify-center text-white text-sm font-semibold">
                     {profile.full_name.charAt(0).toUpperCase()}
                   </div>
                   <ChevronDown size={16} className="text-navy-400" />
