@@ -399,6 +399,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_set_identity_verified: {
+        Args: { _identity_id: string; _verified: boolean }
+        Returns: undefined
+      }
       choose_initial_role: {
         Args: { _full_name: string; _role: string }
         Returns: undefined
