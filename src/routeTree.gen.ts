@@ -10,33 +10,310 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CompleteProfileRouteImport } from './routes/complete-profile'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as RegisterRouteImport } from './routes/register'
+import { Route as AdminIndexRouteImport } from './routes/admin/index'
+import { Route as AdminBookingsRouteImport } from './routes/admin/bookings'
+import { Route as AdminReportsRouteImport } from './routes/admin/reports'
+import { Route as AdminSettingsRouteImport } from './routes/admin/settings'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminVerificationsRouteImport } from './routes/admin/verifications'
+import { Route as BusinessIndexRouteImport } from './routes/business/index'
+import { Route as BusinessBookingsRouteImport } from './routes/business/bookings'
+import { Route as BusinessReportsRouteImport } from './routes/business/reports'
+import { Route as BusinessScanRouteImport } from './routes/business/scan'
+import { Route as BusinessSettingsRouteImport } from './routes/business/settings'
+import { Route as BusinessVerificationsRouteImport } from './routes/business/verifications'
+import { Route as TravelerIndexRouteImport } from './routes/traveler/index'
+import { Route as TravelerIdentityRouteImport } from './routes/traveler/identity'
+import { Route as TravelerScanRouteImport } from './routes/traveler/scan'
+import { Route as TravelerSettingsRouteImport } from './routes/traveler/settings'
+import { Route as TravelerTripsRouteImport } from './routes/traveler/trips'
+import { Route as TravelerVerificationsRouteImport } from './routes/traveler/verifications'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompleteProfileRoute = CompleteProfileRouteImport.update({
+  id: '/complete-profile',
+  path: '/complete-profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RegisterRoute = RegisterRouteImport.update({
+  id: '/register',
+  path: '/register',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminIndexRoute = AdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminBookingsRoute = AdminBookingsRouteImport.update({
+  id: '/admin/bookings',
+  path: '/admin/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminReportsRoute = AdminReportsRouteImport.update({
+  id: '/admin/reports',
+  path: '/admin/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSettingsRoute = AdminSettingsRouteImport.update({
+  id: '/admin/settings',
+  path: '/admin/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminVerificationsRoute = AdminVerificationsRouteImport.update({
+  id: '/admin/verifications',
+  path: '/admin/verifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessIndexRoute = BusinessIndexRouteImport.update({
+  id: '/business/',
+  path: '/business/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessBookingsRoute = BusinessBookingsRouteImport.update({
+  id: '/business/bookings',
+  path: '/business/bookings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessReportsRoute = BusinessReportsRouteImport.update({
+  id: '/business/reports',
+  path: '/business/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessScanRoute = BusinessScanRouteImport.update({
+  id: '/business/scan',
+  path: '/business/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessSettingsRoute = BusinessSettingsRouteImport.update({
+  id: '/business/settings',
+  path: '/business/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BusinessVerificationsRoute = BusinessVerificationsRouteImport.update({
+  id: '/business/verifications',
+  path: '/business/verifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerIndexRoute = TravelerIndexRouteImport.update({
+  id: '/traveler/',
+  path: '/traveler/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerIdentityRoute = TravelerIdentityRouteImport.update({
+  id: '/traveler/identity',
+  path: '/traveler/identity',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerScanRoute = TravelerScanRouteImport.update({
+  id: '/traveler/scan',
+  path: '/traveler/scan',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerSettingsRoute = TravelerSettingsRouteImport.update({
+  id: '/traveler/settings',
+  path: '/traveler/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerTripsRoute = TravelerTripsRouteImport.update({
+  id: '/traveler/trips',
+  path: '/traveler/trips',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TravelerVerificationsRoute = TravelerVerificationsRouteImport.update({
+  id: '/traveler/verifications',
+  path: '/traveler/verifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/complete-profile': typeof CompleteProfileRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/reports': typeof BusinessReportsRoute
+  '/business/scan': typeof BusinessScanRoute
+  '/business/settings': typeof BusinessSettingsRoute
+  '/business/verifications': typeof BusinessVerificationsRoute
+  '/traveler/identity': typeof TravelerIdentityRoute
+  '/traveler/scan': typeof TravelerScanRoute
+  '/traveler/settings': typeof TravelerSettingsRoute
+  '/traveler/trips': typeof TravelerTripsRoute
+  '/traveler/verifications': typeof TravelerVerificationsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/business/': typeof BusinessIndexRoute
+  '/traveler/': typeof TravelerIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/complete-profile': typeof CompleteProfileRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/reports': typeof BusinessReportsRoute
+  '/business/scan': typeof BusinessScanRoute
+  '/business/settings': typeof BusinessSettingsRoute
+  '/business/verifications': typeof BusinessVerificationsRoute
+  '/traveler/identity': typeof TravelerIdentityRoute
+  '/traveler/scan': typeof TravelerScanRoute
+  '/traveler/settings': typeof TravelerSettingsRoute
+  '/traveler/trips': typeof TravelerTripsRoute
+  '/traveler/verifications': typeof TravelerVerificationsRoute
+  '/admin': typeof AdminIndexRoute
+  '/business': typeof BusinessIndexRoute
+  '/traveler': typeof TravelerIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/complete-profile': typeof CompleteProfileRoute
+  '/login': typeof LoginRoute
+  '/register': typeof RegisterRoute
+  '/admin/bookings': typeof AdminBookingsRoute
+  '/admin/reports': typeof AdminReportsRoute
+  '/admin/settings': typeof AdminSettingsRoute
+  '/admin/users': typeof AdminUsersRoute
+  '/admin/verifications': typeof AdminVerificationsRoute
+  '/business/bookings': typeof BusinessBookingsRoute
+  '/business/reports': typeof BusinessReportsRoute
+  '/business/scan': typeof BusinessScanRoute
+  '/business/settings': typeof BusinessSettingsRoute
+  '/business/verifications': typeof BusinessVerificationsRoute
+  '/traveler/identity': typeof TravelerIdentityRoute
+  '/traveler/scan': typeof TravelerScanRoute
+  '/traveler/settings': typeof TravelerSettingsRoute
+  '/traveler/trips': typeof TravelerTripsRoute
+  '/traveler/verifications': typeof TravelerVerificationsRoute
+  '/admin/': typeof AdminIndexRoute
+  '/business/': typeof BusinessIndexRoute
+  '/traveler/': typeof TravelerIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/complete-profile'
+    | '/login'
+    | '/register'
+    | '/admin/bookings'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/admin/verifications'
+    | '/business/bookings'
+    | '/business/reports'
+    | '/business/scan'
+    | '/business/settings'
+    | '/business/verifications'
+    | '/traveler/identity'
+    | '/traveler/scan'
+    | '/traveler/settings'
+    | '/traveler/trips'
+    | '/traveler/verifications'
+    | '/admin/'
+    | '/business/'
+    | '/traveler/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/complete-profile'
+    | '/login'
+    | '/register'
+    | '/admin/bookings'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/admin/verifications'
+    | '/business/bookings'
+    | '/business/reports'
+    | '/business/scan'
+    | '/business/settings'
+    | '/business/verifications'
+    | '/traveler/identity'
+    | '/traveler/scan'
+    | '/traveler/settings'
+    | '/traveler/trips'
+    | '/traveler/verifications'
+    | '/admin'
+    | '/business'
+    | '/traveler'
+  id:
+    | '__root__'
+    | '/'
+    | '/complete-profile'
+    | '/login'
+    | '/register'
+    | '/admin/bookings'
+    | '/admin/reports'
+    | '/admin/settings'
+    | '/admin/users'
+    | '/admin/verifications'
+    | '/business/bookings'
+    | '/business/reports'
+    | '/business/scan'
+    | '/business/settings'
+    | '/business/verifications'
+    | '/traveler/identity'
+    | '/traveler/scan'
+    | '/traveler/settings'
+    | '/traveler/trips'
+    | '/traveler/verifications'
+    | '/admin/'
+    | '/business/'
+    | '/traveler/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CompleteProfileRoute: typeof CompleteProfileRoute
+  LoginRoute: typeof LoginRoute
+  RegisterRoute: typeof RegisterRoute
+  AdminBookingsRoute: typeof AdminBookingsRoute
+  AdminReportsRoute: typeof AdminReportsRoute
+  AdminSettingsRoute: typeof AdminSettingsRoute
+  AdminUsersRoute: typeof AdminUsersRoute
+  AdminVerificationsRoute: typeof AdminVerificationsRoute
+  BusinessBookingsRoute: typeof BusinessBookingsRoute
+  BusinessReportsRoute: typeof BusinessReportsRoute
+  BusinessScanRoute: typeof BusinessScanRoute
+  BusinessSettingsRoute: typeof BusinessSettingsRoute
+  BusinessVerificationsRoute: typeof BusinessVerificationsRoute
+  TravelerIdentityRoute: typeof TravelerIdentityRoute
+  TravelerScanRoute: typeof TravelerScanRoute
+  TravelerSettingsRoute: typeof TravelerSettingsRoute
+  TravelerTripsRoute: typeof TravelerTripsRoute
+  TravelerVerificationsRoute: typeof TravelerVerificationsRoute
+  AdminIndexRoute: typeof AdminIndexRoute
+  BusinessIndexRoute: typeof BusinessIndexRoute
+  TravelerIndexRoute: typeof TravelerIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +325,179 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/complete-profile': {
+      id: '/complete-profile'
+      path: '/complete-profile'
+      fullPath: '/complete-profile'
+      preLoaderRoute: typeof CompleteProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/register': {
+      id: '/register'
+      path: '/register'
+      fullPath: '/register'
+      preLoaderRoute: typeof RegisterRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/': {
+      id: '/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/bookings': {
+      id: '/admin/bookings'
+      path: '/admin/bookings'
+      fullPath: '/admin/bookings'
+      preLoaderRoute: typeof AdminBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/reports': {
+      id: '/admin/reports'
+      path: '/admin/reports'
+      fullPath: '/admin/reports'
+      preLoaderRoute: typeof AdminReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/settings': {
+      id: '/admin/settings'
+      path: '/admin/settings'
+      fullPath: '/admin/settings'
+      preLoaderRoute: typeof AdminSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/verifications': {
+      id: '/admin/verifications'
+      path: '/admin/verifications'
+      fullPath: '/admin/verifications'
+      preLoaderRoute: typeof AdminVerificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/': {
+      id: '/business/'
+      path: '/business'
+      fullPath: '/business/'
+      preLoaderRoute: typeof BusinessIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/bookings': {
+      id: '/business/bookings'
+      path: '/business/bookings'
+      fullPath: '/business/bookings'
+      preLoaderRoute: typeof BusinessBookingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/reports': {
+      id: '/business/reports'
+      path: '/business/reports'
+      fullPath: '/business/reports'
+      preLoaderRoute: typeof BusinessReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/scan': {
+      id: '/business/scan'
+      path: '/business/scan'
+      fullPath: '/business/scan'
+      preLoaderRoute: typeof BusinessScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/settings': {
+      id: '/business/settings'
+      path: '/business/settings'
+      fullPath: '/business/settings'
+      preLoaderRoute: typeof BusinessSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/business/verifications': {
+      id: '/business/verifications'
+      path: '/business/verifications'
+      fullPath: '/business/verifications'
+      preLoaderRoute: typeof BusinessVerificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/': {
+      id: '/traveler/'
+      path: '/traveler'
+      fullPath: '/traveler/'
+      preLoaderRoute: typeof TravelerIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/identity': {
+      id: '/traveler/identity'
+      path: '/traveler/identity'
+      fullPath: '/traveler/identity'
+      preLoaderRoute: typeof TravelerIdentityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/scan': {
+      id: '/traveler/scan'
+      path: '/traveler/scan'
+      fullPath: '/traveler/scan'
+      preLoaderRoute: typeof TravelerScanRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/settings': {
+      id: '/traveler/settings'
+      path: '/traveler/settings'
+      fullPath: '/traveler/settings'
+      preLoaderRoute: typeof TravelerSettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/trips': {
+      id: '/traveler/trips'
+      path: '/traveler/trips'
+      fullPath: '/traveler/trips'
+      preLoaderRoute: typeof TravelerTripsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/traveler/verifications': {
+      id: '/traveler/verifications'
+      path: '/traveler/verifications'
+      fullPath: '/traveler/verifications'
+      preLoaderRoute: typeof TravelerVerificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CompleteProfileRoute: CompleteProfileRoute,
+  LoginRoute: LoginRoute,
+  RegisterRoute: RegisterRoute,
+  AdminBookingsRoute: AdminBookingsRoute,
+  AdminReportsRoute: AdminReportsRoute,
+  AdminSettingsRoute: AdminSettingsRoute,
+  AdminUsersRoute: AdminUsersRoute,
+  AdminVerificationsRoute: AdminVerificationsRoute,
+  BusinessBookingsRoute: BusinessBookingsRoute,
+  BusinessReportsRoute: BusinessReportsRoute,
+  BusinessScanRoute: BusinessScanRoute,
+  BusinessSettingsRoute: BusinessSettingsRoute,
+  BusinessVerificationsRoute: BusinessVerificationsRoute,
+  TravelerIdentityRoute: TravelerIdentityRoute,
+  TravelerScanRoute: TravelerScanRoute,
+  TravelerSettingsRoute: TravelerSettingsRoute,
+  TravelerTripsRoute: TravelerTripsRoute,
+  TravelerVerificationsRoute: TravelerVerificationsRoute,
+  AdminIndexRoute: AdminIndexRoute,
+  BusinessIndexRoute: BusinessIndexRoute,
+  TravelerIndexRoute: TravelerIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

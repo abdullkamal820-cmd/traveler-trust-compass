@@ -8,6 +8,20 @@
       "when": 1793892036758,
       "tag": "0000_create_stid_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793892093717,
+      "tag": "0001_security_hardening_roles_identities",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793892325450,
+      "tag": "0002_reset_verification_on_identity_edit",
+      "breakpoints": true
     }
   ]
 }
