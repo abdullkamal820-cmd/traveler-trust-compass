@@ -1,16 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
-import { ScanLine, ShieldCheck, AlertTriangle, User2, FileText, Calendar, Globe2, Camera, RotateCcw, Search, Flag, Loader2, CheckCircle2, XCircle, AlertCircle, Building2 } from 'lucide-react';
+import { ScanLine, ShieldCheck, AlertTriangle, User2, FileText, Calendar, Globe2, Camera, RotateCcw, Search, Flag, Loader2, CheckCircle2, XCircle, AlertCircle, Building2, Image as ImageIcon } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { DashboardLayout } from '@/components/DashboardLayout';
 import { Card, Spinner, StatusBadge, Toast, Modal, EmptyState } from '@/components/ui';
-import type { Identity, Profile, Verification, Business } from '@/types';
+import type { Identity, Profile, Business } from '@/types';
+import { decodeQrFromSource } from '@/lib/qr';
 
 type ScanResult = {
   status: 'idle' | 'scanning' | 'found' | 'not_found' | 'error';
   identity?: Identity;
   traveler?: Profile;
   matchedFields?: Record<string, boolean>;
+  verificationId?: string;
 };
 
 export function BusinessScan() {
@@ -29,6 +31,8 @@ export function BusinessScan() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const scanIntervalRef = useRef<number | null>(null);
+  const scanningLoopRef = useRef(false);
+  const qrPhotoRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!profile) return;
@@ -40,63 +44,89 @@ export function BusinessScan() {
   }, [profile]);
 
   const stopCamera = () => {
+    scanningLoopRef.current = false;
     if (streamRef.current) {
       streamRef.current.getTracks().forEach(t => t.stop());
       streamRef.current = null;
     }
     if (scanIntervalRef.current) {
-      clearInterval(scanIntervalRef.current);
+      clearTimeout(scanIntervalRef.current);
       scanIntervalRef.current = null;
     }
+    if (videoRef.current) videoRef.current.srcObject = null;
     setCameraActive(false);
   };
 
   const startCamera = async () => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setToast({ message: 'This browser cannot open the camera here. Use "Scan from photo" or type the code.', type: 'error' });
+      return;
+    }
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
+      let stream: MediaStream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false,
+        });
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
       }
+      streamRef.current = stream;
       setCameraActive(true);
-
-      // Scan for QR codes using a canvas + barcode detection
-      scanIntervalRef.current = window.setInterval(() => {
-        scanVideoFrame();
-      }, 1000);
-    } catch {
-      setToast({ message: 'Could not access camera. You can manually enter the token below.', type: 'error' });
+      const video = videoRef.current;
+      if (video) {
+        video.srcObject = stream;
+        video.setAttribute('playsinline', 'true'); // iOS Safari
+        video.muted = true;
+        await video.play().catch(() => undefined);
+      }
+      scanningLoopRef.current = true;
+      scanLoop();
+    } catch (err) {
+      const name = (err as DOMException)?.name;
+      setToast({
+        message: name === 'NotAllowedError'
+          ? 'Camera permission was denied. Allow camera access in your browser settings, or use "Scan from photo".'
+          : 'Could not open the camera. Use "Scan from photo" or type the code below.',
+        type: 'error',
+      });
+      stopCamera();
     }
   };
 
-  const scanVideoFrame = async () => {
-    if (!videoRef.current || !streamRef.current) return;
+  const scanLoop = async () => {
+    if (!scanningLoopRef.current) return;
+    const token = await scanVideoFrame();
+    if (token) {
+      stopCamera();
+      handleTokenLookup(token);
+      return;
+    }
+    scanIntervalRef.current = window.setTimeout(scanLoop, 250);
+  };
+
+  const scanVideoFrame = async (): Promise<string | null> => {
     const video = videoRef.current;
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    if (!video || !streamRef.current || video.readyState < 2 || !video.videoWidth) return null;
+    return decodeQrFromSource(video, video.videoWidth, video.videoHeight);
+  };
 
-    const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-    ctx.drawImage(video, 0, 0);
-
-    // Try native BarcodeDetector API
-    if ('BarcodeDetector' in window) {
-      try {
-        const detector = new (window as unknown as { BarcodeDetector: new (opts: { types: string[] }) => { detect: (source: CanvasImageSource) => Promise<Array<{ rawValue: string }>> } }).BarcodeDetector({ types: ['qr_code'] });
-        const codes = await detector.detect(canvas);
-        if (codes.length > 0) {
-          const token = codes[0].rawValue;
-          stopCamera();
-          handleTokenLookup(token);
-        }
-      } catch {
-        // Detection error — silently continue
-      }
+  const handleQrPhoto = async (file: File) => {
+    try {
+      const url = URL.createObjectURL(file);
+      const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+        const i = new Image();
+        i.onload = () => resolve(i);
+        i.onerror = reject;
+        i.src = url;
+      });
+      const token = await decodeQrFromSource(img, img.naturalWidth, img.naturalHeight);
+      URL.revokeObjectURL(url);
+      if (token) handleTokenLookup(token);
+      else setToast({ message: 'No QR code found in that photo. Try again closer and in focus.', type: 'error' });
+    } catch {
+      setToast({ message: 'Could not read that photo.', type: 'error' });
     }
   };
 
@@ -105,61 +135,21 @@ export function BusinessScan() {
     setScanning(true);
     setScanResult({ status: 'scanning' });
 
-    const { data: identity, error } = await supabase
-      .from('identities')
-      .select('*')
-      .eq('qr_token', token.trim())
-      .maybeSingle();
-
-    if (error || !identity) {
-      setScanResult({ status: 'not_found' });
-      setScanning(false);
-
-      // Log the not_found verification
-      if (business) {
-        await supabase.from('verifications').insert({
-          business_id: business.id,
-          traveler_user_id: '00000000-0000-0000-0000-000000000000',
-          qr_token_scanned: token.trim(),
-          result: 'not_found',
-        }).then();
-      }
+    const { data, error } = await supabase.rpc('verify_traveler_qr', { _token: token.trim() });
+    setScanning(false);
+    if (error) {
+      setScanResult({ status: 'idle' });
+      setToast({ message: error.message, type: 'error' });
       return;
     }
-
-    const { data: traveler } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', identity.user_id)
-      .maybeSingle();
-
-    // Log the verification
-    const matchedFields: Record<string, boolean> = {
-      full_name: true,
-      nationality: true,
-      passport_number: true,
-      date_of_birth: true,
-    };
-
-    const result = 'verified';
-
-    await supabase.from('verifications').insert({
-      business_id: business.id,
-      traveler_user_id: identity.user_id,
-      identity_id: identity.id,
-      qr_token_scanned: token.trim(),
-      result,
-      verified_fields: matchedFields,
-    });
-
-    setScanResult({
-      status: 'found',
-      identity: identity as Identity,
-      traveler: traveler as Profile,
-      matchedFields,
-    });
-    setScanning(false);
-    setToast({ message: 'Identity verified successfully', type: 'success' });
+    const res = data as { status: string; verification_id?: string; identity?: Identity; traveler?: Profile };
+    if (res.status !== 'found' || !res.identity) {
+      setScanResult({ status: 'not_found' });
+      return;
+    }
+    const matchedFields: Record<string, boolean> = { full_name: true, nationality: true, passport_number: true, date_of_birth: true };
+    setScanResult({ status: 'found', identity: res.identity, traveler: res.traveler, matchedFields, verificationId: res.verification_id });
+    setToast({ message: 'Identity found — compare it with the physical passport', type: 'success' });
   };
 
   const handleManualLookup = () => {
@@ -175,6 +165,7 @@ export function BusinessScan() {
       business_id: business.id,
       traveler_user_id: scanResult.traveler.id,
       identity_id: scanResult.identity.id,
+      verification_id: scanResult.verificationId ?? null,
       report_reason: reportReason,
       details: reportDetails,
       status: 'open',
@@ -222,20 +213,26 @@ export function BusinessScan() {
             <Card>
               <h2 className="text-lg font-bold text-navy-900 mb-4">Camera Scanner</h2>
               <div className="relative bg-navy-900 rounded-2xl overflow-hidden aspect-video flex items-center justify-center">
+                <video
+                  ref={videoRef}
+                  className={`w-full h-full object-cover ${cameraActive ? '' : 'hidden'}`}
+                  playsInline
+                  muted
+                  autoPlay
+                />
                 {cameraActive ? (
                   <>
-                    <video ref={videoRef} className="w-full h-full object-cover" playsInline muted />
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                      <div className="w-48 h-48 border-2 border-turquoise-400 rounded-2xl">
+                      <div className="w-48 h-48 border-2 border-turquoise-400 rounded-2xl shadow-[0_0_0_9999px_rgba(10,28,46,0.45)]">
                         <div className="w-full h-full border-4 border-transparent border-t-turquoise-400 animate-pulse rounded-2xl" />
                       </div>
                     </div>
-                    <button onClick={stopCamera} className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/20 text-white rounded-xl text-sm backdrop-blur-md hover:bg-white/30">
+                    <button type="button" onClick={stopCamera} className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-white/20 text-white rounded-xl text-sm backdrop-blur-md hover:bg-white/30">
                       Stop Camera
                     </button>
                   </>
                 ) : (
-                  <button onClick={startCamera} className="flex flex-col items-center gap-4 text-white p-8">
+                  <button type="button" onClick={startCamera} className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-white p-8">
                     <div className="w-16 h-16 rounded-2xl bg-turquoise-500/20 flex items-center justify-center">
                       <Camera size={28} className="text-turquoise-400" />
                     </div>
@@ -244,12 +241,25 @@ export function BusinessScan() {
                   </button>
                 )}
               </div>
+              <div className="mt-4 flex items-center justify-center">
+                <button type="button" onClick={() => qrPhotoRef.current?.click()} className="btn-secondary text-sm">
+                  <ImageIcon size={16} />
+                  Scan from photo
+                </button>
+                <input
+                  ref={qrPhotoRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) handleQrPhoto(f); }}
+                />
+              </div>
             </Card>
 
             {/* Manual entry */}
             <Card>
               <h2 className="text-lg font-bold text-navy-900 mb-4">Manual Token Entry</h2>
-              <p className="text-sm text-navy-400 mb-4">If the camera isn't available, enter the QR token manually:</p>
+              <p className="text-sm text-navy-400 mb-4">If the camera isn't available, type the code shown under the traveler's QR:</p>
               <div className="flex gap-3">
                 <div className="relative flex-1">
                   <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-navy-400" />
