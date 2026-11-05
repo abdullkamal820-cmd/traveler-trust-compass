@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from '@/lib/router-compat';
 import {
-  Mail, Lock, User, ArrowRight, Plane, ShieldCheck, Building2, Shield, Loader2,
+  Mail, Lock, User, ArrowRight, Plane, ShieldCheck, Building2, Loader2,
   Phone, MessageSquare, CheckCircle2, KeyRound,
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
@@ -60,6 +60,9 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
       const { error } = await signUp(email, password, role, fullName);
       if (error) {
         setError(error);
+        setLoading(false);
+      } else if (needsConfirm.current) {
+        setInfo('Account created! Check your email and click the confirmation link, then sign in.');
         setLoading(false);
       } else {
         navigate('/');
@@ -302,11 +305,10 @@ export function AuthPage({ mode }: { mode: 'login' | 'register' }) {
               {mode === 'register' && (
                 <div>
                   <label className="label">I am a...</label>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     {([
                       { value: 'traveler', label: 'Traveler', icon: Plane, desc: 'Personal travel ID' },
                       { value: 'business', label: 'Business', icon: Building2, desc: 'Verify travelers' },
-                      { value: 'admin', label: 'Admin', icon: Shield, desc: 'Platform admin' },
                     ] as const).map((opt) => (
                       <button
                         key={opt.value}

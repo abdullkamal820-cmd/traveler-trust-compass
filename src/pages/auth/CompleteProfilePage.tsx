@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from '@/lib/router-compat';
-import { Plane, Building2, Shield, User, ArrowRight, Loader2 } from 'lucide-react';
+import { Plane, Building2, User, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Logo } from '@/components/Logo';
 import type { UserRole } from '@/types';
@@ -9,7 +9,9 @@ export function CompleteProfilePage() {
   const { completeProfile, session } = useAuth();
   const navigate = useNavigate();
 
-  const [fullName, setFullName] = useState('');
+  const [fullName, setFullName] = useState<string>(
+    session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || ''
+  );
   const [role, setRole] = useState<UserRole>('traveler');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -59,7 +61,6 @@ export function CompleteProfilePage() {
                   onChange={(e) => setFullName(e.target.value)}
                   placeholder="John Doe"
                   className="input pl-11"
-                  defaultValue={session?.user?.user_metadata?.full_name || session?.user?.user_metadata?.name || ''}
                   required
                 />
               </div>
@@ -67,11 +68,10 @@ export function CompleteProfilePage() {
 
             <div>
               <label className="label">I am a...</label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 gap-3">
                 {([
                   { value: 'traveler', label: 'Traveler', icon: Plane, desc: 'Personal travel ID' },
                   { value: 'business', label: 'Business', icon: Building2, desc: 'Verify travelers' },
-                  { value: 'admin', label: 'Admin', icon: Shield, desc: 'Platform admin' },
                 ] as const).map((opt) => (
                   <button
                     key={opt.value}
