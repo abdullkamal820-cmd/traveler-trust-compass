@@ -142,7 +142,7 @@ export function BusinessScan() {
       setToast({ message: error.message, type: 'error' });
       return;
     }
-    const res = data as { status: string; verification_id?: string; identity?: Identity; traveler?: Profile };
+    const res = data as unknown as { status: string; verification_id?: string; identity?: Identity; traveler?: Profile };
     if (res.status !== 'found' || !res.identity) {
       setScanResult({ status: 'not_found' });
       return;

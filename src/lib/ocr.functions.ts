@@ -3,7 +3,7 @@ import { requireSupabaseAuth } from '@/integrations/supabase/auth-middleware';
 import { parsePassportText } from '@/lib/mrz';
 
 type OcrResponse =
-  | { ok: true; data: Record<string, unknown> }
+  | { ok: true; data: Record<string, string | number> }
   | { ok: false; code: 'OCR_NOT_CONFIGURED' | 'BAD_IMAGE' | 'NO_TEXT' | 'FAILED'; message: string };
 
 // Reads a passport photo with Google Cloud Vision, then extracts fields from the MRZ lines.
@@ -60,7 +60,7 @@ export const scanPassport = createServerFn({ method: 'POST' })
       }
       const parsed = parsePassportText(text);
       delete parsed.raw_text; // never send full passport text back unnecessarily
-      return { ok: true, data: parsed };
+      return { ok: true, data: parsed as Record<string, string | number> };
     } catch (err) {
       console.error('scanPassport failed', err);
       return { ok: false, code: 'FAILED', message: 'Passport scanning failed. Please try again or type your details.' };
